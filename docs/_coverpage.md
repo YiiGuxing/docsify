@@ -1,6 +1,6 @@
 ![logo](_media/icon.svg)
 
-# docsify <small>4.13.1</small>
+# docsify <small>4.13.1-cover-lifecycle</small>
 
 > A magical documentation site generator.
 
