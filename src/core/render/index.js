@@ -362,33 +362,46 @@ export function Render(Base) {
 
       dom.toggleClass(el, 'add', 'show');
 
-      let html = this.coverIsHTML ? text : this.compiler.cover(text);
+      const callback = html => {
+        const m = html
+          .trim()
+          .match('<p><img.*?data-origin="(.*?)"[^a]+alt="(.*?)">([^<]*?)</p>$');
 
-      const m = html
-        .trim()
-        .match('<p><img.*?data-origin="(.*?)"[^a]+alt="(.*?)">([^<]*?)</p>$');
+        if (m) {
+          if (m[2] === 'color') {
+            el.style.background = m[1] + (m[3] || '');
+          } else {
+            let path = m[1];
 
-      if (m) {
-        if (m[2] === 'color') {
-          el.style.background = m[1] + (m[3] || '');
-        } else {
-          let path = m[1];
+            dom.toggleClass(el, 'add', 'has-mask');
+            if (!isAbsolutePath(m[1])) {
+              path = getPath(this.router.getBasePath(), m[1]);
+            }
 
-          dom.toggleClass(el, 'add', 'has-mask');
-          if (!isAbsolutePath(m[1])) {
-            path = getPath(this.router.getBasePath(), m[1]);
+            el.style.backgroundImage = `url(${path})`;
+            el.style.backgroundSize = 'cover';
+            el.style.backgroundPosition = 'center center';
           }
 
-          el.style.backgroundImage = `url(${path})`;
-          el.style.backgroundSize = 'cover';
-          el.style.backgroundPosition = 'center center';
+          html = html.replace(m[0], '');
         }
 
-        html = html.replace(m[0], '');
-      }
+        this._renderTo('.cover-main', html);
+        sticky();
+      };
 
-      this._renderTo('.cover-main', html);
-      sticky();
+      this.callHook('beforeEach', text, result => {
+        const cb = html => {
+          this.callHook('afterEach', html, hookData => {
+            callback(hookData);
+          });
+        };
+        if (this.coverIsHTML) {
+          cb(result);
+        } else {
+          cb(this.compiler.cover(result));
+        }
+      });
     }
 
     _updateRender() {
